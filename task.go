@@ -17,3 +17,21 @@ func (t *Task[Req, Res]) GetResult() (result Res, _panic any) {
 
 	return
 }
+
+func (t *Task[Req, Res]) asyncExec() {
+	go func() {
+		defer func() {
+			r := recover()
+			if r != nil {
+				t.PanicChan <- r
+			}
+		}()
+		res := t.Invoker(t.Request)
+		select {
+		case t.ResChan <- res:
+			// put into ResChan success
+		default:
+			// no listener
+		}
+	}()
+}

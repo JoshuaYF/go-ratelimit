@@ -48,21 +48,7 @@ func (limiter *TokenBucketRateLimiter[Req, Res]) TryRequest(task *Task[Req, Res]
 
 	select {
 	case <-limiter.bucket:
-		go func() {
-			defer func() {
-				r := recover()
-				if r != nil {
-					task.PanicChan <- r
-				}
-			}()
-			res := task.Invoker(task.Request)
-			select {
-			case task.ResChan <- res:
-				// put into ResChan success
-			default:
-				// no listener
-			}
-		}()
+		task.asyncExec()
 
 		return nil
 	default:

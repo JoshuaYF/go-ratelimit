@@ -65,21 +65,7 @@ func (limiter *LeakyBucketRateLimiter[Req, Res]) consume() {
 	select {
 	case task := <-limiter.bucket:
 		// got task
-		go func() {
-			defer func() {
-				r := recover()
-				if r != nil {
-					task.PanicChan <- r
-				}
-			}()
-			res := task.Invoker(task.Request)
-			select {
-			case task.ResChan <- res:
-				// put into ResChan success
-			default:
-				// no listener
-			}
-		}()
+		task.asyncExec()
 	default:
 		// no task
 	}
