@@ -54,10 +54,11 @@ func (limiter *LeakyBucketRateLimiter[Req, Res]) TryRequest(task *Task[Req, Res]
 
 // Request Put the task into the leaky bucket. if it's full, block.
 func (limiter *LeakyBucketRateLimiter[Req, Res]) Request(task *Task[Req, Res]) {
+	task.ResChan = make(chan Res)
+	task.PanicChan = make(chan any, 1)
+
 	select {
 	case limiter.bucket <- task:
-		task.ResChan = make(chan Res)
-		task.PanicChan = make(chan any, 1)
 	}
 }
 

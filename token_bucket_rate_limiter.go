@@ -41,7 +41,7 @@ func (limiter *TokenBucketRateLimiter[Req, Res]) ResetRate(rate int64) {
 	limiter.t.Reset(time.Duration(time.Second.Nanoseconds() / rate))
 }
 
-// TryRequest Put the task into the leaky bucket. If it's full, discard it and return an error.
+// TryRequest Exec the Task. If token bucket empty, discard the Task and return an error.
 func (limiter *TokenBucketRateLimiter[Req, Res]) TryRequest(task *Task[Req, Res]) (err error) {
 	task.ResChan = make(chan Res)
 	task.PanicChan = make(chan any, 1)
@@ -54,5 +54,18 @@ func (limiter *TokenBucketRateLimiter[Req, Res]) TryRequest(task *Task[Req, Res]
 	default:
 
 		return errors.New("rejected")
+	}
+}
+
+// Request Exec the Task. If token bucket empty, block it.
+func (limiter *TokenBucketRateLimiter[Req, Res]) Request(task *Task[Req, Res]) (err error) {
+	task.ResChan = make(chan Res)
+	task.PanicChan = make(chan any, 1)
+
+	select {
+	case <-limiter.bucket:
+		task.asyncExec()
+
+		return nil
 	}
 }
