@@ -23,7 +23,11 @@ func (t *Task[Req, Res]) asyncExec() {
 		defer func() {
 			r := recover()
 			if r != nil {
-				t.PanicChan <- r
+				select {
+				case t.PanicChan <- r:
+				default:
+					// no listener
+				}
 			}
 		}()
 		res := t.Invoker(t.Request)
