@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type LeakyBucketRateLimter[Req any, Res any] struct {
+type LeakyBucketRateLimiter[Req any, Res any] struct {
 	capacity int64                // The capacity of the bucket.
 	rate     int64                // The leakage rate of the leaky bucket per second.
 	bucket   chan *Task[Req, Res] // Task Leaky Bucket.
@@ -30,8 +30,8 @@ func (t *Task[Req, Res]) GetResult() (result Res, _panic any) {
 	return
 }
 
-func NewLeakyBucketRateLimter[Req any, Res any](capacity, rate int64) *LeakyBucketRateLimter[Req, Res] {
-	limter := &LeakyBucketRateLimter[Req, Res]{
+func NewLeakyBucketRateLimiter[Req any, Res any](capacity, rate int64) *LeakyBucketRateLimiter[Req, Res] {
+	limiter := &LeakyBucketRateLimiter[Req, Res]{
 		capacity: capacity,
 		rate:     rate,
 		bucket:   make(chan *Task[Req, Res], capacity),
@@ -41,22 +41,22 @@ func NewLeakyBucketRateLimter[Req any, Res any](capacity, rate int64) *LeakyBuck
 	go func() {
 		for {
 			select {
-			case <-limter.t.C:
-				limter.consume()
+			case <-limiter.t.C:
+				limiter.consume()
 			}
 		}
 	}()
 
-	return limter
+	return limiter
 }
 
-func (limiter *LeakyBucketRateLimter[Req, Res]) ResetRate(rate int64) {
+func (limiter *LeakyBucketRateLimiter[Req, Res]) ResetRate(rate int64) {
 	limiter.rate = rate
 	limiter.t.Reset(time.Duration(time.Second.Nanoseconds() / rate))
 }
 
 // TryRequest Put the task into the leaky bucket. If it's full, discard it and return an error.
-func (limiter *LeakyBucketRateLimter[Req, Res]) TryRequest(task *Task[Req, Res]) (err error) {
+func (limiter *LeakyBucketRateLimiter[Req, Res]) TryRequest(task *Task[Req, Res]) (err error) {
 	task.ResChan = make(chan Res)
 	task.PanicChan = make(chan any, 1)
 
@@ -71,7 +71,7 @@ func (limiter *LeakyBucketRateLimter[Req, Res]) TryRequest(task *Task[Req, Res])
 }
 
 // Request Put the task into the leaky bucket. if it's full, block.
-func (limiter *LeakyBucketRateLimter[Req, Res]) Request(task *Task[Req, Res]) {
+func (limiter *LeakyBucketRateLimiter[Req, Res]) Request(task *Task[Req, Res]) {
 	select {
 	case limiter.bucket <- task:
 		task.ResChan = make(chan Res)
@@ -79,7 +79,7 @@ func (limiter *LeakyBucketRateLimter[Req, Res]) Request(task *Task[Req, Res]) {
 	}
 }
 
-func (limiter *LeakyBucketRateLimter[Req, Res]) consume() {
+func (limiter *LeakyBucketRateLimiter[Req, Res]) consume() {
 	select {
 	case task := <-limiter.bucket:
 		// got task

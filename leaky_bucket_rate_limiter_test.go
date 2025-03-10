@@ -6,9 +6,9 @@ import (
 	"time"
 )
 
-var RateLimter = NewLeakyBucketRateLimter[int, int](5, 2)
+var RateLimiter = NewLeakyBucketRateLimiter[int, int](5, 2)
 
-func TestLeakyBucketRateLimter(t *testing.T) {
+func TestLeakyBucketRateLimiter(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		go do(i)
 	}
@@ -29,7 +29,7 @@ func do(i int) {
 		Invoker: square,
 		Request: i,
 	}
-	err := RateLimter.TryRequest(&task)
+	err := RateLimiter.TryRequest(&task)
 	if err != nil {
 		fmt.Println(fmt.Sprintf("i = %d, err = %s", i, err))
 		return
