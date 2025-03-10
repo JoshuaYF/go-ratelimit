@@ -6,30 +6,22 @@ import (
 	"time"
 )
 
-var RateLimiter = NewLeakyBucketRateLimiter[int, int](5, 2)
+var TokenRateLimiter = NewTokenBucketRateLimiter[int, int](5, 2)
 
-func TestLeakyBucketRateLimiter(t *testing.T) {
+func TestTokenBucketRateLimiter(t *testing.T) {
 	for i := 0; i < 10; i++ {
-		go do(i)
+		go do0(i)
 	}
 
 	time.Sleep(time.Minute)
 }
 
-func square(a int) int {
-	if a == 4 {
-		panic("panic test")
-	}
-
-	return a * a
-}
-
-func do(i int) {
+func do0(i int) {
 	task := Task[int, int]{
 		Invoker: square,
 		Request: i,
 	}
-	err := RateLimiter.TryRequest(&task)
+	err := TokenRateLimiter.TryRequest(&task)
 	if err != nil {
 		fmt.Println(fmt.Sprintf("i = %d, err = %s", i, err))
 		return

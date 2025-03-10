@@ -1,4 +1,4 @@
-package main
+package ratelimit
 
 type Invoker[Req any, Res any] func(Req) Res
 
