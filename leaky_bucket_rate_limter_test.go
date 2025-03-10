@@ -26,11 +26,14 @@ func do(i int) {
 		fmt.Println(fmt.Sprintf("i = %d, err = %s", i, err))
 		return
 	}
-	var res int = task.GetResult()
-	fmt.Println(res)
+	res, _panic := task.GetResult()
+	fmt.Println(res, _panic)
 }
 
 func square(a int) int {
+	if a == 4 {
+		panic("panic test")
+	}
 
 	return a * a
 }

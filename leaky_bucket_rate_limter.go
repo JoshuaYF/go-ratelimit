@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"time"
 )
 
@@ -22,8 +21,12 @@ type Task[Req any, Res any] struct {
 	PanicChan chan any
 }
 
-func (t *Task[Req, Res]) GetResult() (result Res) {
-	result = <-t.ResChan
+func (t *Task[Req, Res]) GetResult() (result Res, _panic any) {
+	select {
+	case result = <-t.ResChan:
+	case _panic = <-t.PanicChan:
+	}
+
 	return
 }
 
@@ -79,7 +82,7 @@ func (limiter *LeakyBucketRateLimter[Req, Res]) Request(task *Task[Req, Res]) {
 func (limiter *LeakyBucketRateLimter[Req, Res]) consume() {
 	select {
 	case task := <-limiter.bucket:
-		fmt.Println("got task")
+		// got task
 		go func() {
 			defer func() {
 				r := recover()
@@ -90,12 +93,12 @@ func (limiter *LeakyBucketRateLimter[Req, Res]) consume() {
 			res := task.Invoker(task.Request)
 			select {
 			case task.ResChan <- res:
-				fmt.Println("ResChan success")
+				// put into ResChan success
 			default:
-				fmt.Println("ResChan failed")
+				// no listener
 			}
 		}()
 	default:
-		fmt.Println("no task")
+		// no task
 	}
 }
