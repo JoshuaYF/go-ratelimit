@@ -16,6 +16,14 @@ func TestLeakyBucketRateLimter(t *testing.T) {
 	time.Sleep(time.Minute)
 }
 
+func square(a int) int {
+	if a == 4 {
+		panic("panic test")
+	}
+
+	return a * a
+}
+
 func do(i int) {
 	task := Task[int, int]{
 		Invoker: square,
@@ -28,12 +36,4 @@ func do(i int) {
 	}
 	res, _panic := task.GetResult()
 	fmt.Println(res, _panic)
-}
-
-func square(a int) int {
-	if a == 4 {
-		panic("panic test")
-	}
-
-	return a * a
 }
